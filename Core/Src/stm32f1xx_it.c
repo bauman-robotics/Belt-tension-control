@@ -45,9 +45,12 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 float angle = 0.0;
+extern float speed;
 extern UART_HandleTypeDef huart1;
 //extern float str_f;
 uint8_t str_f[BUF_SIZE_FLOAT_UART+2];		
+
+extern uint8_t f_send_to_drv;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -193,21 +196,35 @@ void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 	angle = (float)get_angle();
+	if (angle > 185) speed = 0; 
+	else {
+	//speed = 1.4 - 0.009 * angle;
+	speed = 1.1125 - 0.00612 * angle;
+	}
+	if (speed <0.0f) speed = 0.0f;
+	if (speed > 1.0f) speed = 1.0f;
+	
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 	uint8_t str_f1[10];
-	///static int count = 0;
-	///if (count<100) count ++; 
-	///else {
-	///count = 0;
+	static int count = 0;
+	if (count<100) count ++;  // 100 => 20 times per second
+	else {
+	count = 0;
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		sprintf(str_f, "$%f", angle);		
 		memcpy(str_f1, str_f, BUF_SIZE_FLOAT_UART+1);
 		str_f1[7]=';';
 		HAL_UART_Transmit(&huart1, str_f1, BUF_SIZE_FLOAT_UART+2, 0x0FFF);	
-	///}
+	}
 
+	static int t_count = 0;
+	if (t_count < 1000) t_count ++;
+	else {
+		t_count = 0;
+		f_send_to_drv = 1;		
+	}
   /* USER CODE END SysTick_IRQn 1 */
 }
 

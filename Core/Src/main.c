@@ -62,6 +62,13 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+float speed_drv1 =0.1f;
+float speed = 0.0f;
+uint8_t f_send_to_drv = 0;  // flag - to send 
+#define BUF_SIZE_DRV			6
+#define BUF_SIZE_DRV_SEND	7
+uint8_t buf_drv_send[BUF_SIZE_DRV_SEND];					// uint8_t code + float speed
+uint8_t buf_drv_send_decoded[BUF_SIZE_DRV_SEND - 2];
 /* USER CODE END 0 */
 
 /**
@@ -101,6 +108,7 @@ HAL_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 	USART1->CR1 |= USART_CR1_RXNEIE;
+	USART2->CR1 |= USART_CR1_RXNEIE;
 
   SysTick_Config(SystemCoreClock/2000); // 2000 times per second
   /* USER CODE END 2 */
@@ -111,6 +119,13 @@ HAL_Init();
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
+		if (f_send_to_drv) {
+			f_send_to_drv = 0;
+			buf_drv_send_decoded[0] = 'v';
+			memcpy(buf_drv_send_decoded + 1, &speed, sizeof(float));
+			cobs_encode(buf_drv_send_decoded, BUF_SIZE_DRV_SEND - 2, buf_drv_send); // inp, lenght = 5 ?, outp
+			HAL_UART_Transmit(&huart2, buf_drv_send, BUF_SIZE_DRV_SEND, 0x0FFF);
+		}
   }
   /* USER CODE END 3 */
 }
@@ -209,8 +224,8 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  //huart1.Init.BaudRate = 115200;
-	huart1.Init.BaudRate = 256000;
+  huart1.Init.BaudRate = 115200;
+	//huart1.Init.BaudRate = 256000;  //work
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
