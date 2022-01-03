@@ -1,13 +1,14 @@
 #include "as5048.h"
 extern SPI_HandleTypeDef hspi1;
 
+float  angle_raw;
 	
-float get_angle(void) {
-	float  angle_raw;
+//float get_angle(void) {
+float  get_angle() {
+	static uint8_t pr = 0;
+	uint16_t angle_raw_16 = 0;
 	uint8_t Rx[2] = {0};
 	uint8_t Tx[2] = {0};
-	uint16_t angle_raw_16 = 0;
-	static uint8_t pr = 0;
 	Tx[0]	= 0xff;
 	Tx[1]	= 0x3f;
 	if(!pr) {		
@@ -24,3 +25,4 @@ float get_angle(void) {
 	angle_raw = (float)(angle_raw_16)*0.021973997;
 	return 	angle_raw;
 }	
+

@@ -23,7 +23,8 @@
 #include "stm32f1xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "as5048.h"
+#include "defines.h"
+#include "as5048.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +44,10 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-volatile float angle = 0;
+float angle = 0.0;
+extern UART_HandleTypeDef huart1;
+//extern float str_f;
+uint8_t str_f[BUF_SIZE_FLOAT_UART+2];		
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -182,13 +186,27 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
+
+
+
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-	angle = get_angle();
+	angle = (float)get_angle();
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
+	uint8_t str_f1[10];
+	///static int count = 0;
+	///if (count<100) count ++; 
+	///else {
+	///count = 0;
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		sprintf(str_f, "$%f", angle);		
+		memcpy(str_f1, str_f, BUF_SIZE_FLOAT_UART+1);
+		str_f1[7]=';';
+		HAL_UART_Transmit(&huart1, str_f1, BUF_SIZE_FLOAT_UART+2, 0x0FFF);	
+	///}
 
   /* USER CODE END SysTick_IRQn 1 */
 }

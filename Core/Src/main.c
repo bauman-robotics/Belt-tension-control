@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "as5048.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,8 +48,6 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +68,9 @@ static void MX_USART2_UART_Init(void);
   * @brief  The application entry point.
   * @retval int
   */
+
+//float f1= 0.1;
+
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -78,20 +80,6 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 HAL_Init();
 
@@ -112,7 +100,9 @@ HAL_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+	USART1->CR1 |= USART_CR1_RXNEIE;
 
+  SysTick_Config(SystemCoreClock/2000); // 2000 times per second
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -120,11 +110,12 @@ HAL_Init();
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
+
+
 
 /**
   * @brief System Clock Configuration
@@ -197,7 +188,7 @@ static void MX_SPI1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN SPI1_Init 2 */
-	HAL_GPIO_WritePin(GPIOA, CS_A4_Pin, 1);  // CS off
+	HAL_GPIO_WritePin(GPIOA, CS_A4_Pin, GPIO_PIN_SET);  // CS off
   /* USER CODE END SPI1_Init 2 */
 
 }
@@ -218,7 +209,8 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  //huart1.Init.BaudRate = 115200;
+	huart1.Init.BaudRate = 256000;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
