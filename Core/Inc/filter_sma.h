@@ -1,3 +1,5 @@
+#ifndef __SMA_FILT_H
+#define __SMA_FILT_H
 #include "main.h"
 /* Choose filter order */
 #define FILTER_SMA_ORDER 12
@@ -8,3 +10,4 @@
   * @retval Return filtered data.
   */
 uint16_t Filter_SMA(uint16_t For_Filtered);
+#endif  /* __SMA_FILT_H */

@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "defines.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,6 +37,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define ANGLE_LOOP	1
+#define CONTROL_LOOP	2
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,13 +49,14 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+extern uint32_t angle_loop, control_loop, count_max;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void SetLoopsFrequency(uint8_t loop, uint32_t value);
+void SetUpdateFreq(uint32_t freq);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -71,6 +75,12 @@ float angle_raw_float = 0;
 float angle_raw_float_filtred = 0;
 uint8_t str_1f[BUF_SIZE_FLOAT_UART+2];
 uint8_t str_2f[2*BUF_SIZE_FLOAT_UART+2+1];	 // format: $float;   ore $float1 float2;
+
+
+uint32_t update_freq = 0;
+
+
+
 /* USER CODE END 0 */
 
 /**
@@ -96,7 +106,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+	SystemCoreClockUpdate();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -107,13 +117,26 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+	__HAL_TIM_ENABLE_IT(&htim3, TIM_IT_UPDATE);
+	
 	USART1->CR1 |= USART_CR1_RXNEIE;
 	USART2->CR1 |= USART_CR1_RXNEIE;
 
-  SysTick_Config(SystemCoreClock/2000); // 2000 times per second
+  //SysTick_Config(SystemCoreClock/2000); // 2000 times per second
+	
+	//Set update frequency in Hz (Note!! Timer clock = 1 MHz)
+	SetUpdateFreq(300);
+	
+	//Set angle loop frequency in Hz
+	SetLoopsFrequency(ANGLE_LOOP, 100);
+	//Set control loop frequency in Hz
+	SetLoopsFrequency(CONTROL_LOOP, 10);
 	
 	__HAL_TIM_CLEAR_FLAG(&htim1, TIM_SR_UIF); // clear interrupt bits 
 	HAL_TIM_Base_Start_IT(&htim1);
+	
+	//Update timer start
+	HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
@@ -196,6 +219,37 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		lets_time_to_read_angle = 1;
 	}
 }
+
+
+void SetUpdateFreq(uint32_t freq)
+{
+	if(freq > 1000000) freq = 1000000;
+	TIM3->ARR = SystemCoreClock/(TIM3->PSC+1)/freq;
+	update_freq = count_max = freq;
+}
+
+
+void SetLoopsFrequency(uint8_t loop, uint32_t value)
+{
+	if(value != 0)
+	{
+		switch(loop)
+		{
+			case ANGLE_LOOP:		
+			{
+				angle_loop = update_freq/value;
+				break;
+			}
+			case CONTROL_LOOP:		
+			{
+				control_loop = update_freq/value;
+				break;
+			}
+		}
+	}
+	
+}
+
 
 /* USER CODE END 4 */
 

@@ -44,6 +44,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
+// prescallers for loops in update
+
+uint32_t angle_loop = 1000, control_loop = 1000, count_max = 1000;
+
+
+
 float angle = 0.0;
 extern float speed;
 extern UART_HandleTypeDef huart1;
@@ -262,35 +268,29 @@ void TIM1_UP_IRQHandler(void)
 //}
 
 /* USER CODE BEGIN 1 */
+uint32_t count = 0;
+
 void TIM3_IRQHandler(void)
 {
-	angle = (float)get_angle();
-	if (angle > 185) speed = 0; 
-	else {
-	//speed = 1.4 - 0.009 * angle;
-	speed = 1.1125 - 0.00612 * angle;
+	if((count%angle_loop) == 0)
+	{
+		// Angle computing loop
+		angle = (float)get_angle();
+		if (angle > 185) speed = 0; 
+		else {
+		//speed = 1.4 - 0.009 * angle;
+		speed = 1.1125 - 0.00612 * angle;
+		}
+		if (speed <0.0f) speed = 0.0f;
+		if (speed > 1.0f) speed = 1.0f;
 	}
-	if (speed <0.0f) speed = 0.0f;
-	if (speed > 1.0f) speed = 1.0f;
+	else if((count%control_loop) == 0)
+	{
+		f_send_to_drv = 1;
+	}
 	
-	uint8_t str_f1[10];
-	static int count = 0;
-	if (count<100) count ++;  // 100 => 20 times per second
-	else {
-		count = 0;
-		//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		sprintf(str_f, "$%f", angle);		
-		memcpy(str_f1, str_f, BUF_SIZE_FLOAT_UART+1);
-		str_f1[7]=';';
-		HAL_UART_Transmit(&huart1, str_f1, BUF_SIZE_FLOAT_UART+2, 0x0FFF);	
-	}
-
-	static int t_count = 0;
-	if (t_count < 1000) t_count ++;
-	else {
-		t_count = 0;
-		f_send_to_drv = 1;		
-	}
+	if(count >= count_max) count = 0;
+	count++;
 }
 /* USER CODE END 1 */
 
