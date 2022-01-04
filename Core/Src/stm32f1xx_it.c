@@ -65,6 +65,7 @@ extern uint8_t f_send_to_drv;
 
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -246,7 +247,50 @@ void TIM1_UP_IRQHandler(void)
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
 
-/* USER CODE BEGIN 1 */
+/**
+  * @brief This function handles TIM3 global interrupt.
+  */
+//void TIM3_IRQHandler(void)
+//{
+//  /* USER CODE BEGIN TIM3_IRQn 0 */
+//	
+//  /* USER CODE END TIM3_IRQn 0 */
+//  HAL_TIM_IRQHandler(&htim3);
+//  /* USER CODE BEGIN TIM3_IRQn 1 */
 
+//  /* USER CODE END TIM3_IRQn 1 */
+//}
+
+/* USER CODE BEGIN 1 */
+void TIM3_IRQHandler(void)
+{
+	angle = (float)get_angle();
+	if (angle > 185) speed = 0; 
+	else {
+	//speed = 1.4 - 0.009 * angle;
+	speed = 1.1125 - 0.00612 * angle;
+	}
+	if (speed <0.0f) speed = 0.0f;
+	if (speed > 1.0f) speed = 1.0f;
+	
+	uint8_t str_f1[10];
+	static int count = 0;
+	if (count<100) count ++;  // 100 => 20 times per second
+	else {
+		count = 0;
+		//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		sprintf(str_f, "$%f", angle);		
+		memcpy(str_f1, str_f, BUF_SIZE_FLOAT_UART+1);
+		str_f1[7]=';';
+		HAL_UART_Transmit(&huart1, str_f1, BUF_SIZE_FLOAT_UART+2, 0x0FFF);	
+	}
+
+	static int t_count = 0;
+	if (t_count < 1000) t_count ++;
+	else {
+		t_count = 0;
+		f_send_to_drv = 1;		
+	}
+}
 /* USER CODE END 1 */
 
