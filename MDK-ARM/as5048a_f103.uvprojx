@@ -433,6 +433,16 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f1xx_hal_msp.c</FilePath>
             </File>
+            <File>
+              <FileName>filter_sma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\filter_sma.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter_sma.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\Core\Inc\filter_sma.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
