@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "defines.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +64,13 @@ uint8_t f_send_to_drv = 0;  // flag - to send
 #define BUF_SIZE_DRV_SEND	7
 uint8_t buf_drv_send[BUF_SIZE_DRV_SEND];					// uint8_t code + float speed
 uint8_t buf_drv_send_decoded[BUF_SIZE_DRV_SEND - 2];
+uint8_t lets_time_to_read_angle = 0;
+uint16_t angle_raw_int = 0;
+uint16_t angle_raw_int_filtred = 0;
+float angle_raw_float = 0;
+float angle_raw_float_filtred = 0;
+uint8_t str_1f[BUF_SIZE_FLOAT_UART+2];
+uint8_t str_2f[2*BUF_SIZE_FLOAT_UART+2+1];	 // format: $float;   ore $float1 float2;
 /* USER CODE END 0 */
 
 /**
@@ -124,6 +131,20 @@ int main(void)
 			cobs_encode(buf_drv_send_decoded, BUF_SIZE_DRV_SEND - 2, buf_drv_send); // inp, lenght = 5 ?, outp
 			HAL_UART_Transmit(&huart2, buf_drv_send, BUF_SIZE_DRV_SEND, 0x0FFF);
 		}
+		if (lets_time_to_read_angle) {
+			angle_raw_int = get_angle_raw();	
+			angle_raw_float = (float)(angle_raw_int)*0.021973997;			
+		  angle_raw_int_filtred = Filter_SMA(angle_raw_int);	
+			angle_raw_float_filtred = (float)(angle_raw_int_filtred)*0.021973997;		
+		
+			sprintf(str_1f, "$%f", angle_raw_float);		
+			memcpy(str_2f, str_1f, BUF_SIZE_FLOAT_UART+1);  //$float_not_filtred
+			str_2f[7]=' ';
+			sprintf(str_1f, " %f", angle_raw_float_filtred);	
+		  strcat(str_2f, str_1f);
+			str_2f[14]=';';
+			HAL_UART_Transmit(&huart1, str_2f, 2*BUF_SIZE_FLOAT_UART+2+1, 0x0FFF);	
+		}
   }
   /* USER CODE END 3 */
 }
@@ -172,6 +193,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM1) //check if the interrupt comes from TIM1
 	{
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		lets_time_to_read_angle = 1;
 	}
 }
 
