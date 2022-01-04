@@ -64,7 +64,7 @@ extern uint8_t f_send_to_drv;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern TIM_HandleTypeDef htim1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -189,9 +189,6 @@ void PendSV_Handler(void)
 /**
   * @brief This function handles System tick timer.
   */
-
-
-
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
@@ -211,8 +208,8 @@ void SysTick_Handler(void)
 	static int count = 0;
 	if (count<100) count ++;  // 100 => 20 times per second
 	else {
-	count = 0;
-		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		count = 0;
+		//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		sprintf(str_f, "$%f", angle);		
 		memcpy(str_f1, str_f, BUF_SIZE_FLOAT_UART+1);
 		str_f1[7]=';';
@@ -235,7 +232,21 @@ void SysTick_Handler(void)
 /* please refer to the startup file (startup_stm32f1xx.s).                    */
 /******************************************************************************/
 
+/**
+  * @brief This function handles TIM1 update interrupt.
+  */
+void TIM1_UP_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_UP_IRQn 0 */
+
+  /* USER CODE END TIM1_UP_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim1);
+  /* USER CODE BEGIN TIM1_UP_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
