@@ -43,13 +43,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-uint32_t angle_loop = 1000, control_loop = 1000, count_max = 1000;
+volatile uint32_t angle_loop = 1000, drv_loop = 1000, count_max = 1000, pc_loop = 1000;
 float angle = 0.0;
 extern float speed;
 extern UART_HandleTypeDef huart1;
 //extern float str_f;
 uint8_t str_f[BUF_SIZE_FLOAT_UART+2];		
 extern uint8_t f_send_to_drv;
+extern volatile uint8_t lets_time_to_read_angle, lets_time_to_send_angle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -64,9 +65,8 @@ extern uint8_t f_send_to_drv;
 
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim1;
-extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
-
+extern TIM_HandleTypeDef htim3;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -221,42 +221,29 @@ void TIM1_UP_IRQHandler(void)
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
 
-/**
-  * @brief This function handles TIM3 global interrupt.
-  */
-//void TIM3_IRQHandler(void)
-//{
-//  /* USER CODE BEGIN TIM3_IRQn 0 */
-
-//  /* USER CODE END TIM3_IRQn 0 */
-//  HAL_TIM_IRQHandler(&htim3);
-//  /* USER CODE BEGIN TIM3_IRQn 1 */
-
-//  /* USER CODE END TIM3_IRQn 1 */
-//}
-
 /* USER CODE BEGIN 1 */
 uint32_t count = 0;
 
 void TIM3_IRQHandler(void)
 {
+	__HAL_TIM_CLEAR_FLAG(&htim3, TIM_FLAG_UPDATE);
+	//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	if((count%angle_loop) == 0)
 	{
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_14);
 		// Angle computing loop
-		angle = (float)get_angle();
-		if (angle > 185) speed = 0; 
-		else {
-		//speed = 1.4 - 0.009 * angle;
-		speed = 1.1125 - 0.00612 * angle;
-		}
-		if (speed <0.0f) speed = 0.0f;
-		if (speed > 1.0f) speed = 1.0f;
+		lets_time_to_read_angle = 1;
 	}
-	else if((count%control_loop) == 0)
+	if((count%drv_loop) == 0)
 	{
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_15);
 		f_send_to_drv = 1;
 	}
-	
+	if((count%pc_loop) == 0)
+	{
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		lets_time_to_send_angle = 1;
+	}
 	if(count >= count_max) count = 0;
 	count++;
 }
